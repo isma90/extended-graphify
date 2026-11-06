@@ -109,9 +109,10 @@ BACKENDS: dict[str, dict] = {
         # Google Vertex AI via the native google-genai SDK (vertexai=True).
         # No base_url / env_key: the SDK builds the endpoint from project+location
         # and authenticates via ADC (gcloud ADC or GOOGLE_APPLICATION_CREDENTIALS).
-        "default_model": "gemini-2.5-flash",
+        # Gemini 3.x is only published in the "global" location (regions 404).
+        "default_model": "gemini-3.8-flash",
         "model_env_key": "GRAPHIFY_VERTEX_MODEL",
-        "pricing": {"input": 0.30, "output": 2.50},  # USD per 1M tokens (gemini-2.5-flash on Vertex; estimate)
+        "pricing": {"input": 1.50, "output": 7.50},  # USD per 1M tokens (gemini-3.8-flash list price on Vertex)
         "temperature": 0,
         "max_tokens": 16384,
     },
@@ -561,7 +562,7 @@ def _call_vertex(model: str, user_message: str, max_tokens: int = 8192) -> dict:
     location = (
         os.environ.get("GOOGLE_CLOUD_LOCATION")
         or os.environ.get("VERTEX_LOCATION")
-        or "us-central1"
+        or "global"
     )
     if not project:
         raise ValueError(

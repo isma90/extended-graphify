@@ -2,6 +2,12 @@
 
 Full release notes with details on each version: [GitHub Releases](https://github.com/safishamsi/graphify/releases)
 
+## Unreleased — Vertex default moves to Gemini 3.8 Flash
+
+- Fix: `vertex` backend default model `gemini-2.5-flash` → `gemini-3.8-flash`. Gemini 2.5 was retired on Vertex AI (Oct 2026), so the old default returned 404.
+- Fix: default location `us-central1` → `global`. Gemini 3.x is only published in the `global` location; regional endpoints return 404 for `gemini-3.7-flash` / `gemini-3.8-flash`. `GOOGLE_CLOUD_LOCATION` / `VERTEX_LOCATION` still override it.
+- Fix: cost estimate uses the `gemini-3.8-flash` list price on Vertex ($1.50 / $7.50 per 1M input / output tokens).
+
 ## Unreleased — Google Vertex AI backend (`--backend vertex`)
 
 New LLM provider for headless extraction targeting **Google Vertex AI** (GCP), distinct from the existing AI-Studio `gemini` backend. Additive — no existing backend changes.

@@ -400,7 +400,7 @@ These are only needed for **headless / CI extraction** (`graphify extract`). Whe
 | `AWS_*` / `~/.aws/credentials` | AWS Bedrock — standard credential chain | `--backend bedrock` (no API key, uses IAM) |
 | `GOOGLE_CLOUD_PROJECT` (+ `GOOGLE_CLOUD_LOCATION`) | Google Vertex AI — project/region; auth via ADC (`gcloud auth application-default login`) or `GOOGLE_APPLICATION_CREDENTIALS` | `--backend vertex` (no API key, uses ADC) |
 | `GOOGLE_GENAI_USE_VERTEXAI` | Set `true` to auto-detect the `vertex` backend | optional — otherwise pass `--backend vertex` |
-| `GRAPHIFY_VERTEX_MODEL` | Override the Vertex model (default `gemini-2.5-flash`) | optional |
+| `GRAPHIFY_VERTEX_MODEL` | Override the Vertex model (default `gemini-3.8-flash`; location defaults to `global`) | optional |
 | `GRAPHIFY_MAX_WORKERS` | AST parallelism thread count | optional — also `--max-workers` flag |
 | `GRAPHIFY_MAX_OUTPUT_TOKENS` | Raise output cap for dense corpora | optional — e.g. `32768` for large files |
 | `GRAPHIFY_API_TIMEOUT` | HTTP timeout in seconds (default: 600) | optional — also `--api-timeout` flag |

@@ -80,11 +80,11 @@ def fake_genai(monkeypatch):
 def test_backend_registered():
     assert "vertex" in llm.BACKENDS
     cfg = llm.BACKENDS["vertex"]
-    assert cfg["default_model"] == "gemini-2.5-flash"
+    assert cfg["default_model"] == "gemini-3.8-flash"
     assert cfg["model_env_key"] == "GRAPHIFY_VERTEX_MODEL"
     # No static-key config — auth is via ADC.
     assert "env_key" not in cfg and "env_keys" not in cfg
-    assert llm.estimate_cost("vertex", 1_000_000, 1_000_000) == pytest.approx(0.30 + 2.50)
+    assert llm.estimate_cost("vertex", 1_000_000, 1_000_000) == pytest.approx(1.50 + 7.50)
 
 
 # ---------------------------------------------------------------------------
@@ -120,12 +120,12 @@ def test_gemini_api_key_beats_vertex(monkeypatch):
 def test_call_vertex_parses_response(monkeypatch, fake_genai):
     monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "my-proj")
     monkeypatch.setenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-    result = llm._call_vertex("gemini-2.5-flash", "dummy", max_tokens=8192)
+    result = llm._call_vertex("gemini-3.8-flash", "dummy", max_tokens=8192)
     assert len(result["nodes"]) == 2
     assert len(result["edges"]) == 1
     assert result["input_tokens"] == 12
     assert result["output_tokens"] == 8
-    assert result["model"] == "gemini-2.5-flash"
+    assert result["model"] == "gemini-3.8-flash"
     assert result["finish_reason"] == "stop"
     # vertexai=True + project/location threaded into the client
     _, kwargs = fake_genai.client_cls.call_args
@@ -139,7 +139,7 @@ def test_call_vertex_max_tokens_maps_to_length(monkeypatch, fake_genai):
     fake_genai.generate.return_value = _fake_response(
         json.dumps(_PAYLOAD), finish="MAX_TOKENS"
     )
-    result = llm._call_vertex("gemini-2.5-flash", "dummy")
+    result = llm._call_vertex("gemini-3.8-flash", "dummy")
     assert result["finish_reason"] == "length"
 
 
@@ -149,10 +149,10 @@ def test_call_vertex_defaults_location_and_accepts_alias(monkeypatch, fake_genai
     monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
     monkeypatch.delenv("VERTEX_LOCATION", raising=False)
     monkeypatch.setenv("VERTEX_PROJECT", "alias-proj")  # alias accepted
-    llm._call_vertex("gemini-2.5-flash", "dummy")
+    llm._call_vertex("gemini-3.8-flash", "dummy")
     _, kwargs = fake_genai.client_cls.call_args
     assert kwargs["project"] == "alias-proj"
-    assert kwargs["location"] == "us-central1"  # default region
+    assert kwargs["location"] == "global"  # Gemini 3.x only lives in global
 
 
 def test_call_vertex_requires_project(monkeypatch, fake_genai):
@@ -160,7 +160,7 @@ def test_call_vertex_requires_project(monkeypatch, fake_genai):
     monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
     monkeypatch.delenv("VERTEX_PROJECT", raising=False)
     with pytest.raises(ValueError, match="GOOGLE_CLOUD_PROJECT"):
-        llm._call_vertex("gemini-2.5-flash", "dummy")
+        llm._call_vertex("gemini-3.8-flash", "dummy")
 
 
 def test_call_vertex_missing_sdk_raises_importerror(monkeypatch):
@@ -168,7 +168,7 @@ def test_call_vertex_missing_sdk_raises_importerror(monkeypatch):
     # Force the SDK import to fail regardless of whether it is installed.
     with patch.dict(sys.modules, {"google.genai": None}):
         with pytest.raises(ImportError, match=r"graphifyy\[vertex\]"):
-            llm._call_vertex("gemini-2.5-flash", "dummy")
+            llm._call_vertex("gemini-3.8-flash", "dummy")
 
 
 # ---------------------------------------------------------------------------
@@ -184,18 +184,18 @@ def test_extract_files_direct_dispatches_to_vertex(tmp_path, monkeypatch):
         result = llm.extract_files_direct(files=[f], backend="vertex", root=tmp_path)
     assert cv.called
     # default model resolved
-    assert cv.call_args[0][0] == "gemini-2.5-flash"
+    assert cv.call_args[0][0] == "gemini-3.8-flash"
     assert len(result["nodes"]) == 2
 
 
 def test_vertex_model_override_via_env(tmp_path, monkeypatch):
     monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "my-proj")
-    monkeypatch.setenv("GRAPHIFY_VERTEX_MODEL", "gemini-2.5-pro")
+    monkeypatch.setenv("GRAPHIFY_VERTEX_MODEL", "gemini-3.5-flash")
     f = tmp_path / "svc.py"
     f.write_text("def login():\n    return 1\n")
     with patch("graphify.llm._call_vertex", return_value=dict(_PAYLOAD, input_tokens=1, output_tokens=1)) as cv:
         llm.extract_files_direct(files=[f], backend="vertex", root=tmp_path)
-    assert cv.call_args[0][0] == "gemini-2.5-pro"
+    assert cv.call_args[0][0] == "gemini-3.5-flash"
 
 
 def test_extract_files_direct_no_key_exemption(tmp_path, monkeypatch):
